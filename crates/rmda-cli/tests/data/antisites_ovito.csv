@@ -1,0 +1,4 @@
+# OVITO 3.15 WignerSeitzAnalysisModifier(per_type_occupancies=True) on the fixtures of tests/antisites.rs
+# case,vacancies,interstitials,antisites,site>occupant=count;...,antisite site ids
+b2,6,7,23,1>2=12;2>1=11,77;194;282;681;682;781;931;932;967;1097;1098;1247;1248;1283;1284;1365;1397;1398;1581;1582;1740;1827;1828
+l12,7,8,21,1>2=12;2>1=9,103;109;110;237;238;257;258;281;282;553;554;861;862;950;1337;2082;2397;2398;2488;2645;2646

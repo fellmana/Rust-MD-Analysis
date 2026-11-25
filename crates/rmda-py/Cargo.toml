@@ -1,0 +1,39 @@
+[package]
+name = "rmda-py"
+description = "RMDA (Rust MD Analysis): the rmda Python extension module"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
+
+# Built as an extension module so the interpreter loads it without the
+# `libpython` link-time dependency (this is what keeps the default build free
+# of system *library* requirements; a Python interpreter is needed to build it).
+[lib]
+name = "rmda"
+crate-type = ["cdylib"]
+# `extension-module` makes the crate un-linkable as a standalone test binary, so
+# `cargo test --workspace` must not try to build a harness for it. Python-side
+# tests cover this crate instead.
+test = false
+doctest = false
+
+[dependencies]
+rmda-core = { path = "../rmda-core" }
+rmda-cli = { path = "../rmda-cli" }
+rayon.workspace = true
+pyo3 = { workspace = true, features = ["extension-module"] }
+numpy.workspace = true
+
+[features]
+# The stable-ABI build `maturin build` makes (pyproject.toml enables it): one
+# wheel for CPython >= 3.9, the design target (design.md, Python bindings;
+# numpy itself needs 3.9). Off for `cargo build -p rmda-py`, which keeps building the
+# version-specific module the parity tests stage.
+abi3 = ["pyo3/abi3-py39"]

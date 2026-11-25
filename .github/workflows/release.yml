@@ -1,0 +1,123 @@
+name: release
+
+# Builds the distributable artifacts when a version tag is pushed (or by hand):
+#   - one manylinux2014 x86_64 wheel of the Python module, cp39-abi3 (every
+#     CPython >= 3.9; glibc >= 2.17, so it installs on HPC systems' older
+#     glibc), holding the module and the `rmda` console script,
+#   - abi3 wheels for macOS (arm64, x86_64) and Windows (x86_64), for desktop
+#     use such as OVITO Pro's embedded Python (`ovitos -m pip install rmda`);
+#     built and smoke-tested here only, never on a developer machine, and
+#     independent of the Linux jobs, so one failing does not hold the others,
+#   - the source distribution,
+#   - the `rmda` CLI binary, built in the same manylinux2014 container so it runs
+#     on the same systems.
+# Each wheel is installed into a clean virtualenv and smoke-tested before it is
+# uploaded. Artifacts are attached to the workflow run; publishing them (a
+# GitHub release, PyPI: `twine upload dist/*` or `maturin upload`) is a
+# separate, deliberate step and not done here.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  wheel:
+    name: wheel (manylinux2014 x86_64, abi3)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --locked --out dist
+          manylinux: "2014"
+          target: x86_64
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Smoke-test the wheel in a clean virtualenv (oldest supported Python)
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet dist/*.whl
+          /tmp/venv/bin/python tools/wheel_smoke.py
+          /tmp/venv/bin/rmda --version
+          /tmp/venv/bin/rmda info tests/data/fcc_ortho.xyz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-manylinux2014-x86_64
+          path: dist/*.whl
+
+  wheel-desktop:
+    name: wheel (${{ matrix.name }}, abi3)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos-arm64, os: macos-14, target: aarch64 }
+          - { name: macos-x86_64, os: macos-15-intel, target: x86_64 }
+          - { name: windows-x86_64, os: windows-latest, target: x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --locked --out dist
+          target: ${{ matrix.target }}
+      - name: Smoke-test the wheel
+        shell: bash
+        run: |
+          python -m pip install --quiet dist/*.whl
+          python tools/wheel_smoke.py
+          rmda --version
+          rmda info tests/data/fcc_ortho.xyz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.name }}
+          path: dist/*.whl
+
+  sdist:
+    name: sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  cli:
+    name: rmda CLI (manylinux2014 x86_64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Built inside the manylinux2014 image (glibc 2.17) through `docker run`:
+      # JavaScript actions such as checkout cannot run in that container.
+      - name: Build in manylinux2014
+        run: |
+          docker run --rm -v "$PWD":/io -w /io quay.io/pypa/manylinux2014_x86_64 bash -c '
+            set -euo pipefail
+            curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+            source "$HOME/.cargo/env"
+            cargo build --release --locked -p rmda-cli
+            ./target/release/rmda --version
+            ./target/release/rmda --help > /dev/null'
+      - name: Check the binary needs no newer glibc than 2.17
+        run: |
+          objdump -T target/release/rmda | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+          ! objdump -T target/release/rmda | grep -oE 'GLIBC_2\.(1[89]|[2-9][0-9])'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rmda-cli-manylinux2014-x86_64
+          path: target/release/rmda

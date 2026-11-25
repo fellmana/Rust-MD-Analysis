@@ -1,0 +1,67 @@
+# The Python package: `pip install rmda` (a wheel), or `pip install .` in a
+# checkout (builds from source; needs a Rust toolchain >= 1.72).
+#
+#   maturin build --release        # target/wheels/rmda-<version>-cp39-abi3-<platform>.whl
+#
+# One stable-ABI wheel serves every CPython >= 3.9 (the crate's `abi3` feature).
+# It holds the extension module `rmda._rmda`, the `rmda` package that
+# re-exports it, `rmda.ovito` (OVITO conversions and modifiers), and the
+# `rmda` console script (the full command line).
+# `cargo build --release -p rmda-py` still builds the per-version module the
+# parity tests (crates/rmda-cli/tests/python_bindings.rs) stage.
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rmda"
+description = "RMDA (Rust MD Analysis): structural analysis of atomistic MD frames (CNA, PTM, grains, per-grain defects, voids) in Rust, with a CLI and Python bindings"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT OR Apache-2.0"
+# Shipped in every wheel and sdist: the PTM tables are MIT-licensed upstream.
+license-files = ["LICENSE-MIT", "LICENSE-APACHE", "THIRD-PARTY-NOTICES.md"]
+authors = [{ name = "Aslak Fellman", email = "aslak.fellman@helsinki.fi" }]
+keywords = ["molecular dynamics", "materials science", "defects", "Wigner-Seitz", "grain segmentation", "PTM", "CNA"]
+dependencies = ["numpy"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+# The version is the workspace's (`rmda.__version__`, `rmda --version`), taken from Cargo.
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/fellmana/Rust-MD-Analysis"
+Documentation = "https://github.com/fellmana/Rust-MD-Analysis/blob/main/documentation.md"
+Repository = "https://github.com/fellmana/Rust-MD-Analysis"
+Issues = "https://github.com/fellmana/Rust-MD-Analysis/issues"
+
+[project.optional-dependencies]
+ase = ["ase"]
+# rmda.ovito: conversions and the pipeline modifiers (PropertyReference needs 3.11).
+ovito = ["ovito>=3.11"]
+
+[project.scripts]
+rmda = "rmda:_cli"
+
+# OVITO Pro lists these in its modifier panel once the package is installed in
+# its interpreter (`ovitos -m pip install rmda`). Resolving one imports
+# rmda.ovito, which OVITO's interpreter has the ovito module for.
+[project.entry-points."OVITO.Modifier"]
+"RMDA grain segmentation" = "rmda.ovito:SegmentModifier"
+"RMDA defect census" = "rmda.ovito:DefectsModifier"
+"RMDA voids" = "rmda.ovito:VoidModifier"
+
+[tool.maturin]
+manifest-path = "crates/rmda-py/Cargo.toml"
+python-source = "crates/rmda-py/python"
+module-name = "rmda._rmda"
+features = ["abi3"]
+bindings = "pyo3"

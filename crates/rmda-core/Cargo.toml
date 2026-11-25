@@ -1,0 +1,24 @@
+[package]
+name = "rmda-core"
+description = "RMDA (Rust MD Analysis) core library: data model, io, analysis, exec, profiling"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
+
+[dependencies]
+rayon.workspace = true
+memmap2.workspace = true
+flate2.workspace = true
+# The backend flate2 already uses; `block-boundary` lets the gzip index
+# restart inflation at a deflate block (design §8.1).
+miniz_oxide = { version = "0.9", features = ["block-boundary"] }
+
+[dev-dependencies]
+# Differential tests may invoke python/ASE; kept minimal here.

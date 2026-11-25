@@ -1,0 +1,32 @@
+[package]
+name = "rmda-cli"
+description = "RMDA (Rust MD Analysis): the rmda command-line tool"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
+
+[lib]
+name = "rmda_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rmda"
+path = "src/main.rs"
+
+[dependencies]
+rmda-core = { path = "../rmda-core" }
+clap.workspace = true
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "0.9.6"
+serde_json = "1.0.154"
+flate2.workspace = true
+
+[dev-dependencies]
+flate2.workspace = true

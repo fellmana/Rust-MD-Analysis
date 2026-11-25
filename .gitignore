@@ -1,0 +1,24 @@
+# Build output.
+/target
+**/target
+**/*.rs.bk
+
+# Python bytecode, virtual environments and built wheels.
+__pycache__/
+**/__pycache__/
+*.so
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Research data for the reference-data oracles (~240 MB of MD snapshots; not
+# distributed). The tests read RMDA_REFERENCE_DIR, which defaults to this
+# directory, and skip when it is absent.
+/reference_structures/
+
+# Editor autosave and backup files (Emacs #file#, .#file, file~). A pattern
+# starting with `#` would be a comment here, so it is escaped.
+\#*\#
+.#*
+*~

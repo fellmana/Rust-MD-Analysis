@@ -1,0 +1,23 @@
+# Thin film: W substrate (z <= 500 A) and HEA film (z > 500 A) as two grains,
+# every frame of the run, per-frame defect files.
+#
+#   rmda run thinfilm.toml                 # results/ beside this file
+#   rmda run thinfilm.toml --dry-run       # print the resolved rmda command
+#   rmda run thinfilm.toml --set defects.reference=local
+#
+# Keys are the long options of `rmda defects --help` (rmsd_cutoff is
+# --rmsd-cutoff); relative paths are relative to this file.
+
+[input]
+files = ["reference.data", "frame-*.data"]
+
+[run]
+# threads = 0 uses every core (or SLURM_CPUS_PER_TASK); `rmda run ... --threads N` overrides.
+threads = 0
+
+[defects]
+region = ["z <= 500", "z > 500"]
+reference = "auto"          # global, falling back to patches and then the local census
+out = "results"
+defects_xyz = true
+# defects_layout = "append" # one vacancies.xyz/interstitials.xyz for the whole run

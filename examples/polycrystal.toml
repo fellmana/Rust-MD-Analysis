@@ -1,0 +1,19 @@
+# Polycrystal (e.g. a 10^8-atom frame after cascades): segmented grains, the
+# local census for grains no single lattice describes.
+#
+#   rmda run polycrystal.toml
+#   srun rmda run polycrystal.toml --threads $SLURM_CPUS_PER_TASK                  # under SLURM
+#   rmda run polycrystal.toml --shard $SLURM_ARRAY_TASK_ID/$SLURM_ARRAY_TASK_COUNT  # array job
+#
+# For a large .gz, `rmda index FILE.gz` once first makes reading it parallel.
+
+[input]
+files = ["frame-*.gz"]
+
+[defects]
+segment = true
+seg_mode = "auto"           # OVITO's automatic threshold (implies --ptm-order voronoi)
+reference = "auto"
+# local_merge = "partial"   # parallel local merge: much faster at 10^8 atoms, less exact where loops meet
+out = "results"
+defects_xyz = true
