@@ -308,29 +308,38 @@ pub(crate) fn set_fatal_hook(f: FatalHook) {
 /// (with the stages running), call the fatal hook and exit with code 4
 /// (design §21). Anonymous memory is what the run allocated; the mapped
 /// input is file-backed and droppable, so it is not counted.
+///
+/// The first check runs here, before the thread starts: a run shorter than
+/// the thread's first wake-up is still checked once, whatever the scheduler.
 pub(crate) fn start_mem_watchdog(limit: u64) {
+    check_mem_limit(limit);
     let _ = std::thread::Builder::new()
         .name("rmda-mem-limit".into())
         .spawn(move || loop {
-            let (anon, _) = rmda_core::prof::rss_anon_file();
-            if anon > limit {
-                let stages = rmda_core::prof::active_stages();
-                let why = format!(
-                    "memory limit: {} allocated, over --mem-limit {}{}",
-                    rmda_core::prof::fmt_bytes(anon),
-                    rmda_core::prof::fmt_bytes(limit),
-                    if stages.is_empty() {
-                        String::new()
-                    } else {
-                        format!(", in {}", stages.join(", "))
-                    }
-                );
-                eprintln!("error: {why}");
-                if let Some(h) = FATAL_HOOK.get() {
-                    h(&why);
-                }
-                std::process::exit(4);
-            }
             std::thread::sleep(std::time::Duration::from_millis(100));
+            check_mem_limit(limit);
         });
+}
+
+/// Past `limit` bytes of anonymous memory: report, call the fatal hook, exit 4.
+fn check_mem_limit(limit: u64) {
+    let (anon, _) = rmda_core::prof::rss_anon_file();
+    if anon > limit {
+        let stages = rmda_core::prof::active_stages();
+        let why = format!(
+            "memory limit: {} allocated, over --mem-limit {}{}",
+            rmda_core::prof::fmt_bytes(anon),
+            rmda_core::prof::fmt_bytes(limit),
+            if stages.is_empty() {
+                String::new()
+            } else {
+                format!(", in {}", stages.join(", "))
+            }
+        );
+        eprintln!("error: {why}");
+        if let Some(h) = FATAL_HOOK.get() {
+            h(&why);
+        }
+        std::process::exit(4);
+    }
 }
