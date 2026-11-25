@@ -6,9 +6,9 @@ counts (Wigner–Seitz against a fitted lattice), voids, clusters, RDF and Warre
 comes as a multithreaded command line, `rmda`, and a Python module, `rmda`, and is built for frames
 of 10⁶–10⁸ atoms on one node, from a laptop to an HPC compute node.
 
-- **Manual**: [`documentation.md`](documentation.md): every command, its options and outputs, and
+- **Manual**: [`documentation.md`](https://github.com/fellmana/Rust-MD-Analysis/blob/main/documentation.md): every command, its options and outputs, and
   the Python API.
-- **Design**: [`design.md`](design.md): how each analysis works, the requirements it is held to,
+- **Design**: [`design.md`](https://github.com/fellmana/Rust-MD-Analysis/blob/main/design.md): how each analysis works, the requirements it is held to,
   and the measurements that validate it.
 
 ## Install
@@ -114,9 +114,9 @@ Python parity tests run when the extension module is built (`cargo build -p rmda
 
 ## Licence
 
-Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT)
+Licensed under either of [Apache License, Version 2.0](https://github.com/fellmana/Rust-MD-Analysis/blob/main/LICENSE-APACHE) or [MIT license](https://github.com/fellmana/Rust-MD-Analysis/blob/main/LICENSE-MIT)
 at your option. Parts derive from PTM and follow OVITO's algorithms; see
-[`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+[`THIRD-PARTY-NOTICES.md`](https://github.com/fellmana/Rust-MD-Analysis/blob/main/THIRD-PARTY-NOTICES.md).
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
 this work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
