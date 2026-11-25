@@ -12,14 +12,20 @@ name: release
 #   - the `rmda` CLI binary, built in the same manylinux2014 container so it runs
 #     on the same systems.
 # Each wheel is installed into a clean virtualenv and smoke-tested before it is
-# uploaded. Artifacts are attached to the workflow run; publishing them (a
-# GitHub release, PyPI: `twine upload dist/*` or `maturin upload`) is a
-# separate, deliberate step and not done here.
+# uploaded. Artifacts are attached to the workflow run.
+#
+# A pushed version tag then publishes to PyPI (`publish`), by trusted publishing
+# (OpenID Connect: no token stored anywhere), only when every wheel and the sdist
+# built and passed, and only when the tag names the version being built. A run
+# started by hand (workflow_dispatch) builds and never publishes.
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -130,3 +136,42 @@ jobs:
         with:
           name: rmda-cli-manylinux2014-x86_64
           path: target/release/rmda
+
+  publish:
+    name: publish to PyPI
+    # Tag pushes only; a failed or cancelled build job skips this one (re-run the
+    # failed jobs and it follows). PyPI takes each version once.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [wheel, wheel-desktop, sdist]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The `pypi` environment is the one the trusted publisher on pypi.org names;
+    # its protection rules (an approval, say) apply here.
+    environment:
+      name: pypi
+      url: https://pypi.org/project/rmda/
+    permissions:
+      id-token: write
+    steps:
+      # The wheels and the sdist only: the CLI binary is not a PyPI file.
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+      - name: The tag names the version built
+        run: |
+          ls -l dist
+          want="${GITHUB_REF_NAME#v}"
+          test "$(ls dist/*.whl | wc -l)" -eq 4
+          test -f "dist/rmda-${want}.tar.gz" || {
+            echo "tag ${GITHUB_REF_NAME} but the sdist is $(ls dist/*.tar.gz)"; exit 1; }
+          for w in dist/*.whl; do
+            case "$(basename "$w")" in "rmda-${want}-"*) ;; *)
+              echo "tag ${GITHUB_REF_NAME} but built $(basename "$w")"; exit 1;; esac
+          done
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -3103,8 +3103,8 @@ Python threads keep running; the analysis itself runs on the pool
 `set_threads` sizes. Errors surface as Python exceptions carrying the library's own
 message, so a refusal reads the same in Python as on the command line.
 
-**Open.** Wheels: `.github/workflows/release.yml` builds manylinux2014 abi3 wheels
-(README, *Release artifacts*); none are published to PyPI. Python-side mutation of a frame's columns (`f.set`) is not offered; analyses run on the frame they are handed —
+**Open.** Wheels: `.github/workflows/release.yml` builds the abi3 wheels and publishes
+them to PyPI on a version tag (README, *Releasing*). Python-side mutation of a frame's columns (`f.set`) is not offered; analyses run on the frame they are handed —
 `iread` and `Pipeline` are how you walk a trajectory. See design.md, *Python
 bindings*, for the intended surface.
 

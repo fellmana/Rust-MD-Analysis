@@ -112,6 +112,20 @@ The expensive tests (multi-million-atom ground-truth blocks, OVITO reference com
 (`RMDA_REFERENCE_DIR`, `RMDA_CASCADE_DIR`); they skip with a message when those are unset. The
 Python parity tests run when the extension module is built (`cargo build -p rmda-py`).
 
+## Releasing
+
+Bump `version` in the root `Cargo.toml`, commit, then tag and push:
+
+```console
+git tag -a vX.Y.Z -m "RMDA X.Y.Z" && git push origin vX.Y.Z
+```
+
+`.github/workflows/release.yml` builds and smoke-tests the manylinux2014 wheel, the macOS and
+Windows wheels, the sdist and the `rmda` CLI binary, and, once all of them pass and the tag
+matches the version built, publishes the wheels and sdist to PyPI by trusted publishing. The CLI
+binary is attached to the workflow run, for the GitHub release. A run started by hand builds
+without publishing.
+
 ## Licence
 
 Licensed under either of [Apache License, Version 2.0](https://github.com/fellmana/Rust-MD-Analysis/blob/main/LICENSE-APACHE) or [MIT license](https://github.com/fellmana/Rust-MD-Analysis/blob/main/LICENSE-MIT)
